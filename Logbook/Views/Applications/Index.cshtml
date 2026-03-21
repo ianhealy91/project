@@ -1,0 +1,54 @@
+@model IEnumerable<Logbook.Models.JobApplication>
+@{
+    ViewData["Title"] = "Applications";
+}
+
+<div class="page-header">
+    <h1>My Applications</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Add Application</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <p>No applications logged yet.</p>
+        <a asp-action="Create" class="btn btn-primary">Log your first application</a>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Date Applied</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var app in Model)
+            {
+                <tr>
+                    <td>@app.CompanyName</td>
+                    <td>@app.RoleTitle</td>
+                    <td>@app.DateApplied.ToString("dd MMM yyyy")</td>
+                    <td>@(app.Source ?? "—")</td>
+                    <td>
+                        <span class="status-badge status-@app.Status.ToString().ToLower()">
+                            @app.Status
+                        </span>
+                    </td>
+                    <td class="actions">
+                        <a asp-action="Details" asp-route-id="@app.Id">View</a>
+                        <a asp-action="Edit" asp-route-id="@app.Id">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@app.Id"
+                           onclick="return confirm('Delete this application?')">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

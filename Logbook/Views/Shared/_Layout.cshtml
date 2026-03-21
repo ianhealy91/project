@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Logbook</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a class="site-brand" asp-controller="Applications" asp-action="Index">Logbook</a>
+            <nav class="site-nav">
+                <a asp-controller="Applications" asp-action="Index"
+                   class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Applications" ? "active" : "")">
+                    Applications
+                </a>
+                <a asp-controller="Dashboard" asp-action="Index"
+                   class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    Dashboard
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        @if (TempData["SuccessMessage"] is string success)
+        {
+            <div class="alert alert-success">@success</div>
+        }
+        @if (TempData["ErrorMessage"] is string error)
+        {
+            <div class="alert alert-error">@error</div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>&copy; @DateTime.Now.Year Logbook &mdash; Ian Healy (L00188608)</span>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

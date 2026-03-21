@@ -1,0 +1,31 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.swp
+
+## SQLite database — never commit the live database
+*.db
+*.db-shm
+*.db-wal
+
+## Published output
+publish/
+
+## Secrets — never commit
+appsettings.Production.json
+secrets.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Rider
+.idea/
+
+## NuGet
+*.nupkg
+packages/

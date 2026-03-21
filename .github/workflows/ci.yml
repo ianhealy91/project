@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore NuGet packages
+        run: dotnet restore Logbook.sln
+
+      - name: Build solution
+        run: dotnet build Logbook.sln --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test Logbook.sln --no-build --configuration Release --verbosity normal
+
+      - name: Publish application
+        run: dotnet publish Logbook/Logbook.csproj --no-build --configuration Release --output ./publish
+
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logbook-build
+          path: ./publish
+          retention-days: 7

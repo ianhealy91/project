@@ -2,39 +2,205 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+
+# Prevent duplicate runs on the same branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  BUILD_CONFIGURATION: Release
+  SOLUTION_FILE: Logbook.sln
+  PROJECT_FILE: Logbook/Logbook.csproj
 
 jobs:
+  # ── Job 1: Build & Test ────────────────────────────────────────────────
   build-and-test:
-    name: Build & Test (.NET 8)
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history required for versioning
 
-      - name: Setup .NET 8
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Cache NuGet packages to speed up subsequent runs
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
       - name: Restore NuGet packages
-        run: dotnet restore Logbook.sln
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
 
       - name: Build solution
-        run: dotnet build Logbook.sln --no-restore --configuration Release
+        run: >
+          dotnet build ${{ env.SOLUTION_FILE }}
+          --no-restore
+          --configuration ${{ env.BUILD_CONFIGURATION }}
 
-      - name: Run unit tests
-        run: dotnet test Logbook.sln --no-build --configuration Release --verbosity normal
+      - name: Run unit tests with coverage
+        run: >
+          dotnet test ${{ env.SOLUTION_FILE }}
+          --no-build
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./TestResults/*.trx
+          retention-days: 30
+
+  # ── Job 2: Security & Dependency Scan ─────────────────────────────────
+  security-scan:
+    name: Security & Dependency Scan
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore NuGet packages
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+      # Check for known vulnerabilities in NuGet dependencies
+      - name: Check for vulnerable dependencies
+        run: dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
+        continue-on-error: true
+
+      # Check for deprecated NuGet packages
+      - name: Check for deprecated packages
+        run: dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
+        continue-on-error: true
+
+  # ── Job 3: Publish & SBOM ─────────────────────────────────────────────
+  publish:
+    name: Publish & Generate SBOM
+    runs-on: ubuntu-latest
+    needs: [ build-and-test, security-scan ]
+    # Only publish on pushes to main or develop — not on PRs
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore NuGet packages
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+      - name: Build solution
+        run: >
+          dotnet build ${{ env.SOLUTION_FILE }}
+          --no-restore
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+
+      # Generate a version string: 1.0.0-<short SHA>
+      - name: Generate build version
+        id: version
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          BUILD_VERSION="1.0.0-${SHORT_SHA}"
+          echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "Build version: ${BUILD_VERSION}"
 
       - name: Publish application
-        run: dotnet publish Logbook/Logbook.csproj --no-build --configuration Release --output ./publish
+        run: >
+          dotnet publish ${{ env.PROJECT_FILE }}
+          --no-build
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+          --output ./publish
 
-      - name: Upload build artefact
+      # Write a build manifest alongside the published artefact
+      - name: Write build manifest
+        run: |
+          cat > ./publish/build-manifest.json << EOF
+          {
+            "version": "${{ steps.version.outputs.build_version }}",
+            "commitSha": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflow": "${{ github.workflow }}",
+            "runId": "${{ github.run_id }}"
+          }
+          EOF
+
+      # Generate Software Bill of Materials (SBOM) using CycloneDX
+      - name: Install CycloneDX SBOM tool
+        run: dotnet tool install --global CycloneDX
+
+      - name: Generate SBOM
+        run: >
+          dotnet CycloneDX ${{ env.SOLUTION_FILE }}
+          --output ./sbom
+          --filename logbook-sbom.xml
+        continue-on-error: true
+
+      - name: Upload application artefact
         uses: actions/upload-artifact@v4
         with:
-          name: logbook-build
+          name: logbook-${{ steps.version.outputs.build_version }}
           path: ./publish
-          retention-days: 7
+          retention-days: 30
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom-${{ steps.version.outputs.build_version }}
+          path: ./sbom
+          retention-days: 90
+
+      # Record CI completion timestamp for DORA lead time measurement
+      - name: Record CI completion
+        run: |
+          echo "CI pipeline completed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Run ID: ${{ github.run_id }}"

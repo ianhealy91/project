@@ -1,0 +1,55 @@
+﻿@model Logbook.ViewModels.AddEditViewModel
+
+<div class="form-card">
+    <div class="form-group">
+        <label asp-for="CompanyName"></label>
+        <input asp-for="CompanyName" class="form-control" placeholder="e.g. Acme Ltd" autocomplete="organization" />
+        <span asp-validation-for="CompanyName" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="RoleTitle"></label>
+        <input asp-for="RoleTitle" class="form-control" placeholder="e.g. Software Developer" />
+        <span asp-validation-for="RoleTitle" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="DateApplied"></label>
+        <input asp-for="DateApplied" type="date" class="form-control" />
+        <span asp-validation-for="DateApplied" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Source"></label>
+        <input asp-for="Source" class="form-control" placeholder="e.g. LinkedIn, Indeed, IrishJobs.ie" />
+        <span asp-validation-for="Source" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Status"></label>
+        <select asp-for="Status" class="form-control"
+                asp-items="Html.GetEnumSelectList<Logbook.Models.ApplicationStatus>()">
+        </select>
+        <span asp-validation-for="Status" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Notes"></label>
+        <textarea asp-for="Notes" class="form-control" rows="4"
+                  placeholder="Any notes about this application..."></textarea>
+        <span asp-validation-for="Notes" class="field-validation-error"></span>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            @(Model.IsEdit ? "Save Changes" : "Add Application")
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

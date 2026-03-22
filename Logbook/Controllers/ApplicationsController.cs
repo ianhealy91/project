@@ -49,4 +49,14 @@ public class ApplicationsController : Controller
         TempData["SuccessMessage"] = $"Application to {application.CompanyName} added successfully.";
         return RedirectToAction(nameof(Index));
     }
+
+    // GET /Applications/Details
+    public async Task<IActionResult> Details(int id)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null)
+            return NotFound();
+
+        return View(application);
+    }
 }

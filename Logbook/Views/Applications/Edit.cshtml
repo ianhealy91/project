@@ -1,0 +1,15 @@
+﻿@model Logbook.ViewModels.AddEditViewModel
+@{
+    ViewData["Title"] = $"Edit — {Model.RoleTitle} at {Model.CompanyName}";
+}
+
+<div class="page-header">
+    <h1>Edit Application</h1>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+</div>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <partial name="_ApplicationForm" model="Model" />
+</form>

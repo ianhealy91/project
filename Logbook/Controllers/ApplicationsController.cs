@@ -50,7 +50,7 @@ public class ApplicationsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET /Applications/Details
+    // GET /Applications/Details/5
     public async Task<IActionResult> Details(int id)
     {
         var application = await _service.GetByIdAsync(id);
@@ -58,5 +58,56 @@ public class ApplicationsController : Controller
             return NotFound();
 
         return View(application);
+    }
+
+    // GET /Applications/Edit/5
+    public async Task<IActionResult> Edit(int id)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null)
+            return NotFound();
+
+        var model = new AddEditViewModel
+        {
+            Id = application.Id,
+            CompanyName = application.CompanyName,
+            RoleTitle = application.RoleTitle,
+            DateApplied = application.DateApplied,
+            Source = application.Source,
+            Status = application.Status,
+            Notes = application.Notes
+        };
+
+        return View(model);
+    }
+
+    // POST /Applications/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, AddEditViewModel model)
+    {
+        if (id != model.Id)
+            return BadRequest();
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var application = new JobApplication
+        {
+            Id = model.Id,
+            CompanyName = model.CompanyName,
+            RoleTitle = model.RoleTitle,
+            DateApplied = model.DateApplied,
+            Source = model.Source,
+            Status = model.Status,
+            Notes = model.Notes
+        };
+
+        var result = await _service.UpdateAsync(application);
+        if (result is null)
+            return NotFound();
+
+        TempData["SuccessMessage"] = $"Application to {application.CompanyName} updated successfully.";
+        return RedirectToAction(nameof(Details), new { id = application.Id });
     }
 }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Logbook.Services;
+using Logbook.Models;
+using Logbook.ViewModels;
 
 namespace Logbook.Controllers;
 
@@ -17,5 +19,34 @@ public class ApplicationsController : Controller
     {
         var applications = await _service.GetAllAsync();
         return View(applications);
+    }
+    // GET /Applications/Create
+    public IActionResult Create()
+    {
+        return View(new AddEditViewModel());
+    }
+
+    // POST /Applications/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(AddEditViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var application = new JobApplication
+        {
+            CompanyName = model.CompanyName,
+            RoleTitle = model.RoleTitle,
+            DateApplied = model.DateApplied,
+            Source = model.Source,
+            Status = model.Status,
+            Notes = model.Notes
+        };
+
+        await _service.AddAsync(application);
+
+        TempData["SuccessMessage"] = $"Application to {application.CompanyName} added successfully.";
+        return RedirectToAction(nameof(Index));
     }
 }

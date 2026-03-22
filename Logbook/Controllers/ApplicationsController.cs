@@ -110,4 +110,30 @@ public class ApplicationsController : Controller
         TempData["SuccessMessage"] = $"Application to {application.CompanyName} updated successfully.";
         return RedirectToAction(nameof(Details), new { id = application.Id });
     }
+
+    // GET /Applications/Delete/5
+    public async Task<IActionResult> Delete(int id)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null)
+            return NotFound();
+
+        return View(application);
+    }
+
+    // POST /Applications/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var application = await _service.GetByIdAsync(id);
+        var companyName = application?.CompanyName ?? "the application";
+
+        var deleted = await _service.DeleteAsync(id);
+        if (!deleted)
+            return NotFound();
+
+        TempData["SuccessMessage"] = $"Application to {companyName} deleted successfully.";
+        return RedirectToAction(nameof(Index));
+    }
 }

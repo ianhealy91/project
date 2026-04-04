@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<PdfExportService>();
 
 // EF Core with SQLite
 var dbPath = Path.Combine(

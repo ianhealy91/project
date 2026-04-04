@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Logbook.Services;
 using Logbook.Models;
+using Logbook.Services;
 using Logbook.ViewModels;
 
 namespace Logbook.Controllers;
@@ -15,15 +15,29 @@ public class ApplicationsController : Controller
     }
 
     // GET /Applications
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(ApplicationStatus? status, string? search)
     {
-        var applications = await _service.GetAllAsync();
+        var applications = await _service.GetFilteredAsync(status, search);
+
+        // Pass filter state back to the view so form fields retain their values
+        ViewBag.CurrentStatus = status;
+        ViewBag.CurrentSearch = search ?? string.Empty;
+
         return View(applications);
     }
+
+    // GET /Applications/Details/5
+    public async Task<IActionResult> Details(int id)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null) return NotFound();
+        return View(application);
+    }
+
     // GET /Applications/Create
     public IActionResult Create()
     {
-        return View(new AddEditViewModel());
+        return View(new AddEditViewModel { DateApplied = DateTime.Today });
     }
 
     // POST /Applications/Create
@@ -31,10 +45,9 @@ public class ApplicationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AddEditViewModel model)
     {
-        if (!ModelState.IsValid)
-            return View(model);
+        if (!ModelState.IsValid) return View(model);
 
-        var application = new JobApplication
+        await _service.AddAsync(new JobApplication
         {
             CompanyName = model.CompanyName,
             RoleTitle = model.RoleTitle,
@@ -42,32 +55,19 @@ public class ApplicationsController : Controller
             Source = model.Source,
             Status = model.Status,
             Notes = model.Notes
-        };
+        });
 
-        await _service.AddAsync(application);
-
-        TempData["SuccessMessage"] = $"Application to {application.CompanyName} added successfully.";
+        TempData["SuccessMessage"] = "Application added successfully.";
         return RedirectToAction(nameof(Index));
-    }
-
-    // GET /Applications/Details/5
-    public async Task<IActionResult> Details(int id)
-    {
-        var application = await _service.GetByIdAsync(id);
-        if (application is null)
-            return NotFound();
-
-        return View(application);
     }
 
     // GET /Applications/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var application = await _service.GetByIdAsync(id);
-        if (application is null)
-            return NotFound();
+        if (application is null) return NotFound();
 
-        var model = new AddEditViewModel
+        return View(new AddEditViewModel
         {
             Id = application.Id,
             CompanyName = application.CompanyName,
@@ -76,9 +76,7 @@ public class ApplicationsController : Controller
             Source = application.Source,
             Status = application.Status,
             Notes = application.Notes
-        };
-
-        return View(model);
+        });
     }
 
     // POST /Applications/Edit/5
@@ -86,13 +84,10 @@ public class ApplicationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, AddEditViewModel model)
     {
-        if (id != model.Id)
-            return BadRequest();
+        if (id != model.Id) return BadRequest();
+        if (!ModelState.IsValid) return View(model);
 
-        if (!ModelState.IsValid)
-            return View(model);
-
-        var application = new JobApplication
+        var result = await _service.UpdateAsync(new JobApplication
         {
             Id = model.Id,
             CompanyName = model.CompanyName,
@@ -101,23 +96,19 @@ public class ApplicationsController : Controller
             Source = model.Source,
             Status = model.Status,
             Notes = model.Notes
-        };
+        });
 
-        var result = await _service.UpdateAsync(application);
-        if (result is null)
-            return NotFound();
+        if (result is null) return NotFound();
 
-        TempData["SuccessMessage"] = $"Application to {application.CompanyName} updated successfully.";
-        return RedirectToAction(nameof(Details), new { id = application.Id });
+        TempData["SuccessMessage"] = "Application updated successfully.";
+        return RedirectToAction(nameof(Details), new { id = model.Id });
     }
 
     // GET /Applications/Delete/5
     public async Task<IActionResult> Delete(int id)
     {
         var application = await _service.GetByIdAsync(id);
-        if (application is null)
-            return NotFound();
-
+        if (application is null) return NotFound();
         return View(application);
     }
 
@@ -126,14 +117,8 @@ public class ApplicationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var application = await _service.GetByIdAsync(id);
-        var companyName = application?.CompanyName ?? "the application";
-
-        var deleted = await _service.DeleteAsync(id);
-        if (!deleted)
-            return NotFound();
-
-        TempData["SuccessMessage"] = $"Application to {companyName} deleted successfully.";
+        await _service.DeleteAsync(id);
+        TempData["SuccessMessage"] = "Application deleted.";
         return RedirectToAction(nameof(Index));
     }
 }

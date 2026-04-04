@@ -1,4 +1,5 @@
 @model IEnumerable<Logbook.Models.JobApplication>
+@using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
 }
@@ -8,9 +9,44 @@
     <a asp-action="Create" class="btn btn-primary">+ Add Application</a>
 </div>
 
+<!-- Filter bar -->
+<form method="get" asp-action="Index" style="display:flex; gap:0.75rem; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <div class="form-group" style="margin-bottom:0; min-width:200px;">
+        <label for="search">Search</label>
+        <input type="text" id="search" name="search"
+               value="@ViewBag.CurrentSearch"
+               placeholder="Company or role..."
+               class="form-control" />
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+        <label for="status">Status</label>
+        <select id="status" name="status" class="form-control">
+            <option value="">All statuses</option>
+            @foreach (ApplicationStatus s in Enum.GetValues(typeof(ApplicationStatus)))
+            {
+                var selected = ViewBag.CurrentStatus != null && (ApplicationStatus)ViewBag.CurrentStatus == s
+                    ? "selected" : "";
+                <option value="@s" @selected>@s</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null)
+    {
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    }
+</form>
+
 @if (!Model.Any())
 {
     <div class="empty-state">
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null)
+        {
+            <p>No applications match your filter.</p>
+            <a asp-action="Index" class="btn btn-secondary">Clear filter</a>
+        }
+        else
+        {
         <p>No applications logged yet.</p>
         <a asp-action="Create" class="btn btn-primary">Log your first application</a>
     </div>

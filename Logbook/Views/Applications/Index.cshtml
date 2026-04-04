@@ -1,6 +1,8 @@
 @model IEnumerable<Logbook.Models.JobApplication>
+@using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
+    bool hasFilter = !string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null;
 }
 
 <div class="page-header">
@@ -8,11 +10,54 @@
     <a asp-action="Create" class="btn btn-primary">+ Add Application</a>
 </div>
 
+<!-- Filter bar -->
+<form method="get" asp-action="Index" style="display:flex; gap:0.75rem; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <div class="form-group" style="margin-bottom:0; min-width:200px;">
+        <label for="search">Search</label>
+        <input type="text" id="search" name="search"
+               value="@ViewBag.CurrentSearch"
+               placeholder="Company or role..."
+               class="form-control" />
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+        <label for="status">Status</label>
+        <select id="status" name="status" class="form-control">
+            <option value="">All statuses</option>
+            @foreach (ApplicationStatus s in Enum.GetValues(typeof(ApplicationStatus)))
+            {
+                if (ViewBag.CurrentStatus != null && (ApplicationStatus)ViewBag.CurrentStatus == s)
+                {
+                    <option value="@s" selected>@s</option>
+                }
+                else
+                {
+                    <option value="@s">@s</option>
+                }
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+</form>
+
+@if (hasFilter)
+{
+    <p style="margin-bottom:1rem;">
+        <a asp-action="Index" class="btn btn-secondary">Clear filter</a>
+    </p>
+}
+
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <p>No applications logged yet.</p>
-        <a asp-action="Create" class="btn btn-primary">Log your first application</a>
+        @if (hasFilter)
+        {
+            <p>No applications match your filter.</p>
+        }
+        else
+        {
+            <p>No applications logged yet.</p>
+            <a asp-action="Create" class="btn btn-primary">Log your first application</a>
+        }
     </div>
 }
 else

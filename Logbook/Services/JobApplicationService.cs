@@ -27,6 +27,26 @@ public class JobApplicationService : IJobApplicationService
             .OrderByDescending(a => a.DateApplied)
             .ToListAsync();
     }
+    public async Task<IEnumerable<JobApplication>> GetFilteredAsync(
+        ApplicationStatus? status, string? search)
+    {
+        var query = _context.JobApplications.AsQueryable();
+
+        if (status.HasValue)
+            query = query.Where(a => a.Status == status.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(a =>
+                a.CompanyName.ToLower().Contains(term) ||
+                a.RoleTitle.ToLower().Contains(term));
+        }
+
+        return await query
+            .OrderByDescending(a => a.DateApplied)
+            .ToListAsync();
+    }
 
     public async Task<JobApplication?> GetByIdAsync(int id)
     {

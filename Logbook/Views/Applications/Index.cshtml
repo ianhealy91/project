@@ -2,6 +2,7 @@
 @using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
+    bool hasFilter = !string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null;
 }
 
 <div class="page-header">
@@ -24,31 +25,39 @@
             <option value="">All statuses</option>
             @foreach (ApplicationStatus s in Enum.GetValues(typeof(ApplicationStatus)))
             {
-                var selected = ViewBag.CurrentStatus != null && (ApplicationStatus)ViewBag.CurrentStatus == s
-                    ? "selected" : "";
-                <option value="@s" @selected>@s</option>
+                if (ViewBag.CurrentStatus != null && (ApplicationStatus)ViewBag.CurrentStatus == s)
+                {
+                    <option value="@s" selected>@s</option>
+                }
+                else
+                {
+                    <option value="@s">@s</option>
+                }
             }
         </select>
     </div>
     <button type="submit" class="btn btn-primary">Filter</button>
-    @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null)
-    {
-        <a asp-action="Index" class="btn btn-secondary">Clear</a>
-    }
 </form>
+
+@if (hasFilter)
+{
+    <p style="margin-bottom:1rem;">
+        <a asp-action="Index" class="btn btn-secondary">Clear filter</a>
+    </p>
+}
 
 @if (!Model.Any())
 {
     <div class="empty-state">
-        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null)
+        @if (hasFilter)
         {
             <p>No applications match your filter.</p>
-            <a asp-action="Index" class="btn btn-secondary">Clear filter</a>
         }
         else
         {
-        <p>No applications logged yet.</p>
-        <a asp-action="Create" class="btn btn-primary">Log your first application</a>
+            <p>No applications logged yet.</p>
+            <a asp-action="Create" class="btn btn-primary">Log your first application</a>
+        }
     </div>
 }
 else

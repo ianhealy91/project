@@ -40,6 +40,13 @@
         <span asp-validation-for="Notes" class="field-validation-error"></span>
     </div>
 
+    <div class="form-group">
+        <label asp-for="FollowUpDate"></label>
+        <input asp-for="FollowUpDate" type="date" class="form-control" />
+        <span asp-validation-for="FollowUpDate" class="field-validation-error"></span>
+        <small class="form-text">Optional. Set a reminder date to follow up on this application.</small>
+    </div>
+
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
             @(Model.IsEdit ? "Save Changes" : "Add Application")

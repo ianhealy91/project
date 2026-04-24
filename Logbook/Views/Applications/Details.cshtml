@@ -7,7 +7,11 @@
     <h1>@Model.RoleTitle</h1>
     <div>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
-        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        @{
+            var returnUrl = ViewBag.ReturnUrl as string;
+        }
+        <a href="@(returnUrl ?? Url.Action("Index"))" class="btn btn-secondary">Back to Results</a>
+
     </div>
 </div>
 
@@ -36,6 +40,27 @@
             </span>
         </span>
     </div>
+
+    @if (Model.FollowUpDate.HasValue)
+    {
+        var isOverdue = Model.FollowUpDate.Value.Date < DateTime.Today;
+        var isDueToday = Model.FollowUpDate.Value.Date == DateTime.Today;
+        <div class="detail-row">
+            <span class="detail-label">Follow-up Date</span>
+            <span class="detail-value">
+                @Model.FollowUpDate.Value.ToString("dd MMMM yyyy")
+                @if (isOverdue)
+                {
+                    <span class="status-badge status-rejected" style="margin-left:0.5rem;">Overdue</span>
+                }
+                else if (isDueToday)
+                {
+                    <span class="status-badge status-interviewscheduled" style="margin-left:0.5rem;">Due today</span>
+                }
+            </span>
+        </div>
+    }
+
     <div class="detail-row">
         <span class="detail-label">Added</span>
         <span class="detail-value">@Model.CreatedAt.ToString("dd MMM yyyy, HH:mm")</span>

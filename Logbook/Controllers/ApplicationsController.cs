@@ -15,22 +15,24 @@ public class ApplicationsController : Controller
     }
 
     // GET /Applications
-    public async Task<IActionResult> Index(ApplicationStatus? status, string? search)
+    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy)
     {
-        var applications = await _service.GetFilteredAsync(status, search);
-
-        // Pass filter state back to the view so form fields retain their values
+        var applications = await _service.GetFilteredAsync(status, search, sortBy);
         ViewBag.CurrentStatus = status;
         ViewBag.CurrentSearch = search ?? string.Empty;
-
+        ViewBag.CurrentSort = sortBy ?? string.Empty;
         return View(applications);
     }
 
     // GET /Applications/Details/5
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(int id, ApplicationStatus? status, string? search, string? sortBy)
     {
         var application = await _service.GetByIdAsync(id);
         if (application is null) return NotFound();
+
+        var returnUrl = Url.Action("Index", new { status, search, sortBy });
+        ViewBag.ReturnUrl = returnUrl;
+
         return View(application);
     }
 
@@ -54,7 +56,8 @@ public class ApplicationsController : Controller
             DateApplied = model.DateApplied,
             Source = model.Source,
             Status = model.Status,
-            Notes = model.Notes
+            Notes = model.Notes,
+            FollowUpDate = model.FollowUpDate
         });
 
         TempData["SuccessMessage"] = "Application added successfully.";
@@ -75,7 +78,8 @@ public class ApplicationsController : Controller
             DateApplied = application.DateApplied,
             Source = application.Source,
             Status = application.Status,
-            Notes = application.Notes
+            Notes = application.Notes,
+            FollowUpDate = application.FollowUpDate
         });
     }
 
@@ -95,7 +99,8 @@ public class ApplicationsController : Controller
             DateApplied = model.DateApplied,
             Source = model.Source,
             Status = model.Status,
-            Notes = model.Notes
+            Notes = model.Notes,
+            FollowUpDate = model.FollowUpDate
         });
 
         if (result is null) return NotFound();

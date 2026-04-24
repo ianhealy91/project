@@ -24,6 +24,10 @@ public class JobApplication
 
     public string? Notes { get; set; }
 
+    [DataType(DataType.Date)]
+    [Display(Name = "Follow-up Date")]
+    public DateTime? FollowUpDate { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

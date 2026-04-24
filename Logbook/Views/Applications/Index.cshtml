@@ -1,4 +1,14 @@
 @model IEnumerable<Logbook.Models.JobApplication>
+@{
+    string SortLink(string col)
+    {
+        var current = ViewBag.CurrentSort as string ?? "";
+        var next = current == col ? col + "_desc" : col;
+        var arrow = current == col ? " ▲" : current == col + "_desc" ? " ▼" : "";
+        return $"?sortBy={next}&status={ViewBag.CurrentStatus}&search={ViewBag.CurrentSearch}";
+    }
+}
+
 @using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
@@ -65,11 +75,27 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Company</th>
-                <th>Role</th>
+                <th>
+                    <a href="@SortLink("company")">
+                        Company
+                        @(ViewBag.CurrentSort == "company" ? "▲" : ViewBag.CurrentSort == "company_desc" ? "▼" : "")
+                    </a>
+                </th>
+                <th>
+                    <a href="@SortLink("role")">
+                        Role
+                        @(ViewBag.CurrentSort == "role" ? "▲" : ViewBag.CurrentSort == "role_desc" ? "▼" : "")
+                    </a>
+                </th>
                 <th>Date Applied</th>
                 <th>Source</th>
-                <th>Status</th>
+                <th>
+                    <a href="@SortLink("status")">
+                        Status
+                        @(ViewBag.CurrentSort == "status" ? "▲" : ViewBag.CurrentSort == "status_desc" ? "▼" : "")
+                    </a>
+                </th>
+                <th>Follow-up</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -86,8 +112,36 @@ else
                             @app.Status
                         </span>
                     </td>
+                    <td>
+                        @if (app.FollowUpDate.HasValue)
+                        {
+                            var isOverdue = app.FollowUpDate.Value.Date < DateTime.Today;
+                            var isDueToday = app.FollowUpDate.Value.Date == DateTime.Today;
+                            if (isOverdue)
+                            {
+                                <span class="status-badge status-rejected">Overdue</span>
+                            }
+                            else if (isDueToday)
+                            {
+                                <span class="status-badge status-interviewscheduled">Today</span>
+                            }
+                            else
+                            {
+                                @app.FollowUpDate.Value.ToString("dd MMM yyyy")
+                            }
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
                     <td class="actions">
-                        <a asp-action="Details" asp-route-id="@app.Id">View</a>
+                        <a asp-action="Details"
+                           asp-route-id="@app.Id"
+                           asp-route-status="@ViewBag.CurrentStatus"
+                           asp-route-search="@ViewBag.CurrentSearch"
+                           asp-route-sortBy="@ViewBag.CurrentSort">View</a>
+
                         <a asp-action="Edit" asp-route-id="@app.Id">Edit</a>
                         <a asp-action="Delete" asp-route-id="@app.Id"
                            onclick="return confirm('Delete this application?')">Delete</a>

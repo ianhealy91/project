@@ -15,16 +15,15 @@ public class ApplicationsController : Controller
     }
 
     // GET /Applications
-    public async Task<IActionResult> Index(ApplicationStatus? status, string? search)
+    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy)
     {
-        var applications = await _service.GetFilteredAsync(status, search);
-
-        // Pass filter state back to the view so form fields retain their values
+        var applications = await _service.GetFilteredAsync(status, search, sortBy);
         ViewBag.CurrentStatus = status;
         ViewBag.CurrentSearch = search ?? string.Empty;
-
+        ViewBag.CurrentSort = sortBy ?? string.Empty;
         return View(applications);
     }
+
 
     // GET /Applications/Details/5
     public async Task<IActionResult> Details(int id)

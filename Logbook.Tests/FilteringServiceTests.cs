@@ -157,4 +157,27 @@ public class FilteringServiceTests
         Assert.Equal("Second Co", results[0].CompanyName);
         Assert.Equal("First Co", results[1].CompanyName);
     }
+
+    [Fact]
+    public async Task GetFilteredAsync_SortByCompany_ReturnsAscendingOrder()
+    {
+        var ctx = CreateContext("SortTest1");
+        var svc = new JobApplicationService(ctx);
+        await svc.AddAsync(new JobApplication { CompanyName = "Zebra", RoleTitle = "Dev", DateApplied = DateTime.Today, Status = ApplicationStatus.Applied });
+        await svc.AddAsync(new JobApplication { CompanyName = "Acme", RoleTitle = "Dev", DateApplied = DateTime.Today, Status = ApplicationStatus.Applied });
+        var result = (await svc.GetFilteredAsync(null, null, "company")).ToList();
+        Assert.Equal("Acme", result[0].CompanyName);
+    }
+
+    [Fact]
+    public async Task GetFilteredAsync_SortByCompanyDesc_ReturnsDescendingOrder()
+    {
+        var ctx = CreateContext("SortTest2");
+        var svc = new JobApplicationService(ctx);
+        await svc.AddAsync(new JobApplication { CompanyName = "Zebra", RoleTitle = "Dev", DateApplied = DateTime.Today, Status = ApplicationStatus.Applied });
+        await svc.AddAsync(new JobApplication { CompanyName = "Acme", RoleTitle = "Dev", DateApplied = DateTime.Today, Status = ApplicationStatus.Applied });
+        var result = (await svc.GetFilteredAsync(null, null, "company_desc")).ToList();
+        Assert.Equal("Zebra", result[0].CompanyName);
+    }
+
 }

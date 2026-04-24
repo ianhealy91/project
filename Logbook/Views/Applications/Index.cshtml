@@ -1,4 +1,14 @@
 @model IEnumerable<Logbook.Models.JobApplication>
+@{
+    string SortLink(string col)
+    {
+        var current = ViewBag.CurrentSort as string ?? "";
+        var next = current == col ? col + "_desc" : col;
+        var arrow = current == col ? " ▲" : current == col + "_desc" ? " ▼" : "";
+        return $"?sortBy={next}&status={ViewBag.CurrentStatus}&search={ViewBag.CurrentSearch}";
+    }
+}
+
 @using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
@@ -65,11 +75,26 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Company</th>
-                <th>Role</th>
+                <th>
+                    <a href="@SortLink("company")">
+                        Company
+                        @(ViewBag.CurrentSort == "company" ? "▲" : ViewBag.CurrentSort == "company_desc" ? "▼" : "")
+                    </a>
+                </th>
+                <th>
+                    <a href="@SortLink("role")">
+                        Role
+                        @(ViewBag.CurrentSort == "role" ? "▲" : ViewBag.CurrentSort == "role_desc" ? "▼" : "")
+                    </a>
+                </th>
                 <th>Date Applied</th>
                 <th>Source</th>
-                <th>Status</th>
+                <th>
+                    <a href="@SortLink("status")">
+                        Status
+                        @(ViewBag.CurrentSort == "status" ? "▲" : ViewBag.CurrentSort == "status_desc" ? "▼" : "")
+                    </a>
+                </th>
                 <th>Follow-up</th>
                 <th>Actions</th>
             </tr>
@@ -87,7 +112,6 @@ else
                             @app.Status
                         </span>
                     </td>
-
                     <td>
                         @if (app.FollowUpDate.HasValue)
                         {

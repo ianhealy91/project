@@ -28,7 +28,7 @@ public class JobApplicationService : IJobApplicationService
             .ToListAsync();
     }
     public async Task<IEnumerable<JobApplication>> GetFilteredAsync(
-        ApplicationStatus? status, string? search)
+    ApplicationStatus? status, string? search, string? sortBy = null)
     {
         var query = _context.JobApplications.AsQueryable();
 
@@ -43,10 +43,21 @@ public class JobApplicationService : IJobApplicationService
                 a.RoleTitle.ToLower().Contains(term));
         }
 
-        return await query
-            .OrderByDescending(a => a.DateApplied)
-            .ToListAsync();
+        query = sortBy switch
+        {
+            "company" => query.OrderBy(a => a.CompanyName),
+            "company_desc" => query.OrderByDescending(a => a.CompanyName),
+            "role" => query.OrderBy(a => a.RoleTitle),
+            "role_desc" => query.OrderByDescending(a => a.RoleTitle),
+            "status" => query.OrderBy(a => a.Status),
+            "status_desc" => query.OrderByDescending(a => a.Status),
+            "date" => query.OrderBy(a => a.DateApplied),
+            _ => query.OrderByDescending(a => a.DateApplied)
+        };
+
+        return await query.ToListAsync();
     }
+
 
     public async Task<JobApplication?> GetByIdAsync(int id)
     {

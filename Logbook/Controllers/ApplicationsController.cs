@@ -24,12 +24,15 @@ public class ApplicationsController : Controller
         return View(applications);
     }
 
-
     // GET /Applications/Details/5
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(int id, ApplicationStatus? status, string? search, string? sortBy)
     {
         var application = await _service.GetByIdAsync(id);
         if (application is null) return NotFound();
+
+        var returnUrl = Url.Action("Index", new { status, search, sortBy });
+        ViewBag.ReturnUrl = returnUrl;
+
         return View(application);
     }
 

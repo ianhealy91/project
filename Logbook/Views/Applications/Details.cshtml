@@ -7,7 +7,11 @@
     <h1>@Model.RoleTitle</h1>
     <div>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
-        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        @{
+            var returnUrl = ViewBag.ReturnUrl as string;
+        }
+        <a href="@(returnUrl ?? Url.Action("Index"))" class="btn btn-secondary">Back to Results</a>
+
     </div>
 </div>
 

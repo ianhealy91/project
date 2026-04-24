@@ -33,6 +33,10 @@ public class AddEditViewModel
     [Display(Name = "Notes")]
     public string? Notes { get; set; }
 
+    [DataType(DataType.Date)]
+    [Display(Name = "Follow-up Date")]
+    public DateTime? FollowUpDate { get; set; }
+
     // Determines whether the form renders in Create or Edit mode
     public bool IsEdit => Id > 0;
 }

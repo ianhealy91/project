@@ -70,6 +70,7 @@ else
                 <th>Date Applied</th>
                 <th>Source</th>
                 <th>Status</th>
+                <th>Follow-up</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -85,6 +86,30 @@ else
                         <span class="status-badge status-@app.Status.ToString().ToLower()">
                             @app.Status
                         </span>
+                    </td>
+
+                    <td>
+                        @if (app.FollowUpDate.HasValue)
+                        {
+                            var isOverdue = app.FollowUpDate.Value.Date < DateTime.Today;
+                            var isDueToday = app.FollowUpDate.Value.Date == DateTime.Today;
+                            if (isOverdue)
+                            {
+                                <span class="status-badge status-rejected">Overdue</span>
+                            }
+                            else if (isDueToday)
+                            {
+                                <span class="status-badge status-interviewscheduled">Today</span>
+                            }
+                            else
+                            {
+                                @app.FollowUpDate.Value.ToString("dd MMM yyyy")
+                            }
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
                     </td>
                     <td class="actions">
                         <a asp-action="Details" asp-route-id="@app.Id">View</a>

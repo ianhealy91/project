@@ -54,7 +54,8 @@ public class ApplicationsController : Controller
             DateApplied = model.DateApplied,
             Source = model.Source,
             Status = model.Status,
-            Notes = model.Notes
+            Notes = model.Notes,
+            FollowUpDate = model.FollowUpDate
         });
 
         TempData["SuccessMessage"] = "Application added successfully.";
@@ -75,7 +76,8 @@ public class ApplicationsController : Controller
             DateApplied = application.DateApplied,
             Source = application.Source,
             Status = application.Status,
-            Notes = application.Notes
+            Notes = application.Notes,
+            FollowUpDate = application.FollowUpDate
         });
     }
 
@@ -95,7 +97,8 @@ public class ApplicationsController : Controller
             DateApplied = model.DateApplied,
             Source = model.Source,
             Status = model.Status,
-            Notes = model.Notes
+            Notes = model.Notes,
+            FollowUpDate = model.FollowUpDate
         });
 
         if (result is null) return NotFound();

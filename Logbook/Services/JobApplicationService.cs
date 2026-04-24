@@ -73,6 +73,7 @@ public class JobApplicationService : IJobApplicationService
         existing.Source = application.Source;
         existing.Status = application.Status;
         existing.Notes = application.Notes;
+        existing.FollowUpDate = application.FollowUpDate;
         existing.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

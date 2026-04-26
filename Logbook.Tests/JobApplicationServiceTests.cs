@@ -215,4 +215,26 @@ public class JobApplicationServiceTests
         Assert.Single(results);
         Assert.Equal("In Range Ltd", results.First().CompanyName);
     }
+
+    [Fact]
+    public async Task GetPagedAsync_ShouldReturnCorrectPage()
+    {
+        var ctx = CreateInMemoryContext("PaginationTest");
+        var svc = new JobApplicationService(ctx);
+        for (int i = 1; i <= 15; i++)
+        {
+            await svc.AddAsync(new JobApplication
+            {
+                CompanyName = $"Company {i}",
+                RoleTitle = "Dev",
+                DateApplied = DateTime.Today.AddDays(-i),
+                Status = ApplicationStatus.Applied
+            });
+        }
+        var result = await svc.GetPagedAsync(null, null, null, page: 2, pageSize: 10);
+        Assert.Equal(15, result.TotalCount);
+        Assert.Equal(2, result.TotalPages);
+        Assert.Equal(5, result.Items.Count());
+        Assert.Equal(2, result.Page);
+    }
 }

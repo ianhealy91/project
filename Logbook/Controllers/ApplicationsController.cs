@@ -15,13 +15,15 @@ public class ApplicationsController : Controller
     }
 
     // GET /Applications
-    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy)
+    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy, int page = 1)
     {
-        var applications = await _service.GetFilteredAsync(status, search, sortBy);
+        const int pageSize = 10;
+        var result = await _service.GetPagedAsync(status, search, sortBy, page, pageSize);
         ViewBag.CurrentStatus = status;
         ViewBag.CurrentSearch = search ?? string.Empty;
         ViewBag.CurrentSort = sortBy ?? string.Empty;
-        return View(applications);
+        ViewBag.CurrentPage = page;
+        return View(result);
     }
 
     // GET /Applications/Details/5

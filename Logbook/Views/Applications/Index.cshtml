@@ -1,4 +1,4 @@
-@model IEnumerable<Logbook.Models.JobApplication>
+@model Logbook.Models.PagedResult<Logbook.Models.JobApplication>
 @using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
@@ -10,7 +10,7 @@
     string SortLink(string col)
     {
         var next = currentSort == col ? col + "_desc" : col;
-        return $"?sortBy={next}&status={currentStatus}&search={currentSearch}";
+        return $"?sortBy={next}&status={currentStatus}&search={currentSearch}&page=1";
     }
     string SortArrow(string col) =>
         currentSort == col ? "▲" : currentSort == col + "_desc" ? "▼" : "";
@@ -57,7 +57,7 @@
     </p>
 }
 
-@if (!Model.Any())
+@if (!Model.Items.Any())
 {
     <div class="empty-state">
         @if (hasFilter)
@@ -86,7 +86,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var app in Model)
+            @foreach (var app in Model.Items)
             {
                 <tr>
                     <td>@app.CompanyName</td>
@@ -135,4 +135,32 @@ else
             }
         </tbody>
     </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem;">
+            @if (Model.HasPreviousPage)
+            {
+                <a href="?sortBy=@currentSort&status=@currentStatus&search=@currentSearch&page=@(Model.Page - 1)" class="btn btn-secondary">← Previous</a>
+            }
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                if (i == Model.Page)
+                {
+                    <span class="btn btn-primary" style="cursor:default;">@i</span>
+                }
+                else
+                {
+                    <a href="?sortBy=@currentSort&status=@currentStatus&search=@currentSearch&page=@i" class="btn btn-secondary">@i</a>
+                }
+            }
+            @if (Model.HasNextPage)
+            {
+                <a href="?sortBy=@currentSort&status=@currentStatus&search=@currentSearch&page=@(Model.Page + 1)" class="btn btn-secondary">Next →</a>
+            }
+            <span style="margin-left:0.5rem; color:#666; font-size:0.9rem;">
+                @Model.TotalCount application@(Model.TotalCount == 1 ? "" : "s")
+            </span>
+        </div>
+    }
 }

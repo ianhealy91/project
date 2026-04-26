@@ -1,18 +1,19 @@
 @model IEnumerable<Logbook.Models.JobApplication>
-@{
-    string SortLink(string col)
-    {
-        var current = ViewBag.CurrentSort as string ?? "";
-        var next = current == col ? col + "_desc" : col;
-        var arrow = current == col ? " ▲" : current == col + "_desc" ? " ▼" : "";
-        return $"?sortBy={next}&status={ViewBag.CurrentStatus}&search={ViewBag.CurrentSearch}";
-    }
-}
-
 @using Logbook.Models
 @{
     ViewData["Title"] = "Applications";
     bool hasFilter = !string.IsNullOrEmpty(ViewBag.CurrentSearch as string) || ViewBag.CurrentStatus != null;
+    string currentSort = ViewBag.CurrentSort as string ?? "";
+    string currentSearch = ViewBag.CurrentSearch as string ?? "";
+    string currentStatus = ViewBag.CurrentStatus?.ToString() ?? "";
+
+    string SortLink(string col)
+    {
+        var next = currentSort == col ? col + "_desc" : col;
+        return $"?sortBy={next}&status={currentStatus}&search={currentSearch}";
+    }
+    string SortArrow(string col) =>
+        currentSort == col ? "▲" : currentSort == col + "_desc" ? "▼" : "";
 }
 
 <div class="page-header">
@@ -20,12 +21,11 @@
     <a asp-action="Create" class="btn btn-primary">+ Add Application</a>
 </div>
 
-<!-- Filter bar -->
 <form method="get" asp-action="Index" style="display:flex; gap:0.75rem; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap;">
     <div class="form-group" style="margin-bottom:0; min-width:200px;">
         <label for="search">Search</label>
         <input type="text" id="search" name="search"
-               value="@ViewBag.CurrentSearch"
+               value="@currentSearch"
                placeholder="Company or role..."
                class="form-control" />
     </div>
@@ -46,6 +46,7 @@
             }
         </select>
     </div>
+    <input type="hidden" name="sortBy" value="@currentSort" />
     <button type="submit" class="btn btn-primary">Filter</button>
 </form>
 
@@ -75,26 +76,11 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>
-                    <a href="@SortLink("company")">
-                        Company
-                        @(ViewBag.CurrentSort == "company" ? "▲" : ViewBag.CurrentSort == "company_desc" ? "▼" : "")
-                    </a>
-                </th>
-                <th>
-                    <a href="@SortLink("role")">
-                        Role
-                        @(ViewBag.CurrentSort == "role" ? "▲" : ViewBag.CurrentSort == "role_desc" ? "▼" : "")
-                    </a>
-                </th>
-                <th>Date Applied</th>
+                <th><a href="@SortLink("company")">Company @SortArrow("company")</a></th>
+                <th><a href="@SortLink("role")">Role @SortArrow("role")</a></th>
+                <th><a href="@SortLink("date")">Date Applied @SortArrow("date")</a></th>
                 <th>Source</th>
-                <th>
-                    <a href="@SortLink("status")">
-                        Status
-                        @(ViewBag.CurrentSort == "status" ? "▲" : ViewBag.CurrentSort == "status_desc" ? "▼" : "")
-                    </a>
-                </th>
+                <th><a href="@SortLink("status")">Status @SortArrow("status")</a></th>
                 <th>Follow-up</th>
                 <th>Actions</th>
             </tr>
@@ -138,10 +124,9 @@ else
                     <td class="actions">
                         <a asp-action="Details"
                            asp-route-id="@app.Id"
-                           asp-route-status="@ViewBag.CurrentStatus"
-                           asp-route-search="@ViewBag.CurrentSearch"
-                           asp-route-sortBy="@ViewBag.CurrentSort">View</a>
-
+                           asp-route-status="@currentStatus"
+                           asp-route-search="@currentSearch"
+                           asp-route-sortBy="@currentSort">View</a>
                         <a asp-action="Edit" asp-route-id="@app.Id">Edit</a>
                         <a asp-action="Delete" asp-route-id="@app.Id"
                            onclick="return confirm('Delete this application?')">Delete</a>

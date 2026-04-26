@@ -6,6 +6,7 @@
     string currentSort = ViewBag.CurrentSort as string ?? "";
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
     string currentStatus = ViewBag.CurrentStatus?.ToString() ?? "";
+    int currentPage = (int)(ViewBag.CurrentPage ?? 1);
 
     string SortLink(string col)
     {
@@ -130,6 +131,31 @@ else
                         <a asp-action="Edit" asp-route-id="@app.Id">Edit</a>
                         <a asp-action="Delete" asp-route-id="@app.Id"
                            onclick="return confirm('Delete this application?')">Delete</a>
+                        <form asp-action="UpdateStatus" method="post"
+                              style="display:inline-block; margin-left:0.25rem;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@app.Id" />
+                            <input type="hidden" name="filterStatus" value="@currentStatus" />
+                            <input type="hidden" name="search" value="@currentSearch" />
+                            <input type="hidden" name="sortBy" value="@currentSort" />
+                            <input type="hidden" name="page" value="@currentPage" />
+                            <select name="status"
+                                    class="form-control"
+                                    style="display:inline-block; width:auto; padding:0.2rem 0.4rem; font-size:0.85rem;"
+                                    onchange="this.form.submit()">
+                                @foreach (ApplicationStatus s in Enum.GetValues(typeof(ApplicationStatus)))
+                                {
+                                    if (s == app.Status)
+                                    {
+                                        <option value="@s" selected>@s</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                        </form>
                     </td>
                 </tr>
             }

@@ -152,4 +152,19 @@ public class ApplicationsController : Controller
         TempData["SuccessMessage"] = "Application deleted.";
         return RedirectToAction(nameof(Index));
     }
+
+    // POST /Applications/UpdateStatus
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStatus(int id, ApplicationStatus status,
+        ApplicationStatus? filterStatus, string? search, string? sortBy, int page = 1)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null) return NotFound();
+
+        application.Status = status;
+        await _service.UpdateAsync(application);
+
+        return RedirectToAction(nameof(Index), new { status = filterStatus, search, sortBy, page });
+    }
 }

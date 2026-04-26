@@ -8,7 +8,89 @@
     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
 
+<!-- AI extraction panel -->
+<div style="background:#f0f7ff; border:1px solid #bcd4f0; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
+    <h3 style="margin-top:0; margin-bottom:0.5rem; font-size:1rem;">Auto-fill from job listing</h3>
+    <p style="margin-bottom:0.75rem; font-size:0.9rem; color:#555;">
+        Paste a job listing URL or the full job description text below and click Auto-fill.
+        Fields will be populated automatically — you can review and edit them before saving.
+    </p>
+    <p style="margin-bottom:0.75rem; font-size:0.85rem; color:#92400e; background:#fef3c7; border:1px solid #fcd34d; border-radius:4px; padding:0.4rem 0.75rem;">
+        ⚠ Direct LinkedIn job URLs are not supported as LinkedIn restricts automated access.
+        For LinkedIn listings, paste the job description text instead.
+    </p>
+    <div style="display:flex; gap:0.75rem; align-items:flex-start; flex-wrap:wrap;">
+        <textarea id="ai-input"
+                  rows="3"
+                  placeholder="Paste a URL (e.g. https://careers.example.com/job/123) or paste the full job description text..."
+                  style="flex:1; min-width:260px; padding:0.5rem; border:1px solid #ccc; border-radius:4px; font-size:0.9rem; resize:vertical;"></textarea>
+        <button type="button" id="ai-extract-btn" class="btn btn-primary" style="white-space:nowrap;">
+            Auto-fill
+        </button>
+    </div>
+    <p id="ai-status" style="margin-top:0.5rem; font-size:0.85rem; min-height:1.2rem;"></p>
+</div>
+
 <form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
     <partial name="_ApplicationForm" model="Model" />
 </form>
+
+<script>
+    document.getElementById('ai-extract-btn').addEventListener('click', async function () {
+        const input = document.getElementById('ai-input').value.trim();
+        const status = document.getElementById('ai-status');
+        const btn = this;
+
+        if (!input) {
+            status.textContent = 'Please paste a URL or job description first.';
+            status.style.color = '#b45309';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Extracting...';
+        status.textContent = 'Sending to AI — this may take a few seconds...';
+        status.style.color = '#555';
+
+        try {
+            const response = await fetch('/Applications/Extract', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                status.textContent = data.error ?? 'Extraction failed. Please fill in the fields manually.';
+                status.style.color = '#b45309';
+                return;
+            }
+
+            // Populate form fields — only overwrite if a value was extracted
+            if (data.companyName) {
+                document.getElementById('CompanyName').value = data.companyName;
+            }
+            if (data.roleTitle) {
+                document.getElementById('RoleTitle').value = data.roleTitle;
+            }
+            if (data.source) {
+                document.getElementById('Source').value = data.source;
+            }
+            if (data.notes) {
+                document.getElementById('Notes').value = data.notes;
+            }
+
+            status.textContent = 'Fields populated. Please review before saving.';
+            status.style.color = '#166534';
+
+        } catch (err) {
+            status.textContent = 'Something went wrong. Please fill in the fields manually.';
+            status.style.color = '#b45309';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Auto-fill';
+        }
+    });
+</script>

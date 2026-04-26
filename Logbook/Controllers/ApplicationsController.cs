@@ -8,10 +8,12 @@ namespace Logbook.Controllers;
 public class ApplicationsController : Controller
 {
     private readonly IJobApplicationService _service;
+    private readonly IAiExtractionService _aiService;
 
-    public ApplicationsController(IJobApplicationService service)
+    public ApplicationsController(IJobApplicationService service, IAiExtractionService aiService)
     {
         _service = service;
+        _aiService = aiService;
     }
 
     // GET /Applications
@@ -64,6 +66,28 @@ public class ApplicationsController : Controller
 
         TempData["SuccessMessage"] = "Application added successfully.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST /Applications/Extract
+    [HttpPost]
+    public async Task<IActionResult> Extract([FromBody] string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return BadRequest(new { error = "No input provided." });
+
+        var result = await _aiService.ExtractAsync(input);
+
+        if (!result.Success)
+            return Ok(new { success = false, error = result.ErrorMessage });
+
+        return Ok(new
+        {
+            success = true,
+            companyName = result.CompanyName,
+            roleTitle = result.RoleTitle,
+            source = result.Source,
+            notes = result.Notes
+        });
     }
 
     // GET /Applications/Edit/5

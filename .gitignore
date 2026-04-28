@@ -17,6 +17,7 @@ publish/
 
 ## Secrets — never commit
 appsettings.Production.json
+appsettings.Development.json
 secrets.json
 
 ## OS

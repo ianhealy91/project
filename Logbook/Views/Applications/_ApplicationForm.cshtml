@@ -55,6 +55,31 @@
     </div>
 </div>
 
+<script>
+    (function () {
+        let formDirty = false;
+
+        // Mark form as dirty on any input change
+        document.querySelectorAll('input, select, textarea').forEach(function (el) {
+            el.addEventListener('change', function () { formDirty = true; });
+            el.addEventListener('input', function () { formDirty = true; });
+        });
+
+        // Suppress warning when the form is intentionally submitted
+        document.querySelector('form').addEventListener('submit', function () {
+            formDirty = false;
+        });
+
+        // Warn on navigation away if dirty
+        window.addEventListener('beforeunload', function (e) {
+            if (formDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    })();
+</script>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

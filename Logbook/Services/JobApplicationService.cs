@@ -58,6 +58,49 @@ public class JobApplicationService : IJobApplicationService
         return await query.ToListAsync();
     }
 
+    public async Task<PagedResult<JobApplication>> GetPagedAsync(
+    ApplicationStatus? status, string? search, string? sortBy, int page, int pageSize)
+    {
+        var query = _context.JobApplications.AsQueryable();
+
+        if (status.HasValue)
+            query = query.Where(a => a.Status == status.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(a =>
+                a.CompanyName.ToLower().Contains(term) ||
+                a.RoleTitle.ToLower().Contains(term));
+        }
+
+        query = sortBy switch
+        {
+            "company" => query.OrderBy(a => a.CompanyName),
+            "company_desc" => query.OrderByDescending(a => a.CompanyName),
+            "role" => query.OrderBy(a => a.RoleTitle),
+            "role_desc" => query.OrderByDescending(a => a.RoleTitle),
+            "status" => query.OrderBy(a => a.Status),
+            "status_desc" => query.OrderByDescending(a => a.Status),
+            "date" => query.OrderBy(a => a.DateApplied),
+            _ => query.OrderByDescending(a => a.DateApplied)
+        };
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<JobApplication>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
+
 
     public async Task<JobApplication?> GetByIdAsync(int id)
     {

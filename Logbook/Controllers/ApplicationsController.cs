@@ -8,20 +8,24 @@ namespace Logbook.Controllers;
 public class ApplicationsController : Controller
 {
     private readonly IJobApplicationService _service;
+    private readonly IAiExtractionService _aiService;
 
-    public ApplicationsController(IJobApplicationService service)
+    public ApplicationsController(IJobApplicationService service, IAiExtractionService aiService)
     {
         _service = service;
+        _aiService = aiService;
     }
 
     // GET /Applications
-    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy)
+    public async Task<IActionResult> Index(ApplicationStatus? status, string? search, string? sortBy, int page = 1)
     {
-        var applications = await _service.GetFilteredAsync(status, search, sortBy);
+        const int pageSize = 10;
+        var result = await _service.GetPagedAsync(status, search, sortBy, page, pageSize);
         ViewBag.CurrentStatus = status;
         ViewBag.CurrentSearch = search ?? string.Empty;
         ViewBag.CurrentSort = sortBy ?? string.Empty;
-        return View(applications);
+        ViewBag.CurrentPage = page;
+        return View(result);
     }
 
     // GET /Applications/Details/5
@@ -62,6 +66,28 @@ public class ApplicationsController : Controller
 
         TempData["SuccessMessage"] = "Application added successfully.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST /Applications/Extract
+    [HttpPost]
+    public async Task<IActionResult> Extract([FromBody] string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return BadRequest(new { error = "No input provided." });
+
+        var result = await _aiService.ExtractAsync(input);
+
+        if (!result.Success)
+            return Ok(new { success = false, error = result.ErrorMessage });
+
+        return Ok(new
+        {
+            success = true,
+            companyName = result.CompanyName,
+            roleTitle = result.RoleTitle,
+            source = result.Source,
+            notes = result.Notes
+        });
     }
 
     // GET /Applications/Edit/5
@@ -125,5 +151,20 @@ public class ApplicationsController : Controller
         await _service.DeleteAsync(id);
         TempData["SuccessMessage"] = "Application deleted.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST /Applications/UpdateStatus
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStatus(int id, ApplicationStatus status,
+        ApplicationStatus? filterStatus, string? search, string? sortBy, int page = 1)
+    {
+        var application = await _service.GetByIdAsync(id);
+        if (application is null) return NotFound();
+
+        application.Status = status;
+        await _service.UpdateAsync(application);
+
+        return RedirectToAction(nameof(Index), new { status = filterStatus, search, sortBy, page });
     }
 }

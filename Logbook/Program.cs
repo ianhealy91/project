@@ -1,4 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Logbook.Data;
 using Logbook.Services;
 
@@ -21,6 +25,64 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Application services
 builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
+
+builder.Services.AddHttpClient<AiExtractionService>();
+builder.Services.AddScoped<IAiExtractionService, AiExtractionService>();
+
+// OpenTelemetry
+var otlpEndpoint = builder.Configuration["Grafana:OtlpEndpoint"];
+var instanceId = builder.Configuration["Grafana:InstanceId"];
+var apiToken = builder.Configuration["Grafana:ApiToken"];
+
+if (!string.IsNullOrWhiteSpace(otlpEndpoint) &&
+    !string.IsNullOrWhiteSpace(instanceId) &&
+    !string.IsNullOrWhiteSpace(apiToken))
+{
+    var credentials = Convert.ToBase64String(
+        System.Text.Encoding.UTF8.GetBytes($"{instanceId}:{apiToken}"));
+
+    var resourceBuilder = ResourceBuilder.CreateDefault()
+        .AddService(serviceName: "Logbook", serviceVersion: "1.0.0")
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName.ToLower()
+        });
+
+    builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri($"{otlpEndpoint}/v1/traces");
+            otlp.Headers = $"Authorization=Basic {credentials}";
+            otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        }))
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri($"{otlpEndpoint}/v1/metrics");
+            otlp.Headers = $"Authorization=Basic {credentials}";
+            otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        }));
+
+    builder.Logging.AddOpenTelemetry(logging =>
+    {
+        logging.SetResourceBuilder(resourceBuilder);
+        logging.AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri($"{otlpEndpoint}/v1/logs");
+            otlp.Headers = $"Authorization=Basic {credentials}";
+            otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        });
+    });
+}
 
 var app = builder.Build();
 

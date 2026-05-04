@@ -70,6 +70,9 @@ public class ApplicationsController : Controller
 
     // POST /Applications/Extract
     [HttpPost]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(object), 200)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> Extract([FromBody] string input)
     {
         if (string.IsNullOrWhiteSpace(input))

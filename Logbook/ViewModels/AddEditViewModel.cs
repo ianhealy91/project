@@ -2,9 +2,13 @@
 using Logbook.Models;
 
 namespace Logbook.ViewModels;
+/// Presentation-layer model for the Create and Edit forms.
+/// Decoupled from the JobApplication domain entity to keep
+/// validation attributes out of the domain model.
 
 public class AddEditViewModel
 {
+    /// Zero for a new entry; the existing record ID when editing.
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Company name is required.")]
@@ -37,6 +41,7 @@ public class AddEditViewModel
     [Display(Name = "Follow-up Date")]
     public DateTime? FollowUpDate { get; set; }
 
-    // Determines whether the form renders in Create or Edit mode
+    /// True when editing an existing record; false for a new entry.
+    /// Used by the shared form partial to render context-appropriate labels and button text.
     public bool IsEdit => Id > 0;
 }

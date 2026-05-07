@@ -229,7 +229,6 @@ jobs:
           VALIDATE_CSHARP: true
           VALIDATE_YAML: true
           VALIDATE_JSON: true
-          VALIDATE_MARKDOWN: false
           FILTER_REGEX_EXCLUDE: '.*Migrations/.*'
 
   # ── Job 5: Notify on Failure ──────────────────────────────────────────

@@ -108,7 +108,7 @@ public class JobApplicationServiceTests
         var result = await service.GetByIdAsync(added.Id);
 
         Assert.NotNull(result);
-        Assert.Equal("DELIBERATEFAIL", result.CompanyName);
+        Assert.Equal("Target Corp", result.CompanyName);
         Assert.Equal("Engineer", result.RoleTitle);
     }
 

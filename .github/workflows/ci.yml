@@ -205,3 +205,38 @@ jobs:
           echo "Commit SHA: ${{ github.sha }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Run ID: ${{ github.run_id }}"
+
+  notify-on-failure:
+    name: Create Issue on CI Failure
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan, publish]
+    if: failure() && github.ref == 'refs/heads/main'
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Create failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure']
+            });
+
+            const duplicate = issues.find(i =>
+              i.title.includes(context.sha.substring(0, 7))
+            );
+
+            if (!duplicate) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `CI failure on main — ${context.sha.substring(0, 7)}`,
+                body: `## CI Pipeline Failure\n\n**Branch:** \`${context.ref}\`\n**Commit:** \`${context.sha}\`\n**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nOne or more CI jobs failed on the main branch. Please investigate and resolve before the next deployment.\n`,
+                labels: ['ci-failure', 'bug']
+              });
+            }

@@ -101,7 +101,7 @@ jobs:
 
       # Upload staging artefact for traceability
       - name: Upload staging artefact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: staging-${{ steps.version.outputs.build_version }}
           path: ./publish-staging
@@ -195,7 +195,7 @@ jobs:
           echo "Deployment simulation complete."
 
       - name: Upload production artefact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: production-${{ steps.version.outputs.build_version }}
           path: ./publish-production

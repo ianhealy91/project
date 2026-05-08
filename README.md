@@ -76,7 +76,7 @@ To enable the AI-assisted job listing extraction feature, create `Logbook/appset
 }
 ```
 
-> ? Do not commit this file. It is listed in `.gitignore`.
+> Do not commit this file. It is listed in `.gitignore`.
 
 #### Optional: Grafana Cloud observability
 
@@ -130,20 +130,20 @@ https://localhost:{port}/swagger
 
 ```
 Logbook/
-??? Controllers/          # ApplicationsController, DashboardController
-??? Data/                 # AppDbContext, EF Core configuration
-??? Migrations/           # EF Core migration files
-??? Models/               # JobApplication entity, ApplicationStatus enum, PagedResult
-??? Services/             # IJobApplicationService, JobApplicationService,
-?                         # PdfExportService, IAiExtractionService, AiExtractionService
-??? ViewModels/           # AddEditViewModel, DashboardViewModel
-??? Views/                # Razor views organised by controller
-??? wwwroot/              # CSS, static assets
+- Controllers/          # ApplicationsController, DashboardController
+- Data/                 # AppDbContext, EF Core configuration
+- Migrations/           # EF Core migration files
+- Models/               # JobApplication entity, ApplicationStatus enum, PagedResult
+- Services/             # IJobApplicationService, JobApplicationService,
+                         # PdfExportService, IAiExtractionService, AiExtractionService
+- ViewModels/           # AddEditViewModel, DashboardViewModel
+- Views/                # Razor views organised by controller
+- wwwroot/              # CSS, static assets
 
 Logbook.Tests/
-??? JobApplicationServiceTests.cs
-??? DashboardServiceTests.cs
-??? FilteringServiceTests.cs
+- JobApplicationServiceTests.cs
+- DashboardServiceTests.cs
+- FilteringServiceTests.cs
 ```
 
 ---

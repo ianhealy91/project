@@ -28,13 +28,13 @@ The following must be installed before running the application:
 | .NET SDK | 8.0.x (LTS) | https://dotnet.microsoft.com/download/dotnet/8 |
 | Git | 2.x | https://git-scm.com/downloads |
 
-**Optional: required only for database migrations:**
+**Optional, required only for database migrations:**
 
 | Dependency | Install command |
 |---|---|
 | EF Core CLI tools | `dotnet tool install --global dotnet-ef` |
 
-**Optional: required only for AI auto-fill feature:**
+**Optional, required only for AI auto-fill feature:**
 
 - An Anthropic API key (https://console.anthropic.com)
 

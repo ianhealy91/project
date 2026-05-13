@@ -20,8 +20,7 @@ public class AiExtractionService : IAiExtractionService
         ILogger<AiExtractionService> logger)
     {
         _httpClient = httpClient;
-        _apiKey = configuration["Anthropic:ApiKey"]
-            ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured.");
+        _apiKey = configuration["Anthropic:ApiKey"];
         _logger = logger;
     }
 
@@ -89,6 +88,11 @@ public class AiExtractionService : IAiExtractionService
 
     private async Task<ExtractionResult> CallClaudeAsync(string content, string? detectedSource)
     {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            return new ExtractionResult(null, null, null, null, false,
+                "AI extraction is not configured. Please add an Anthropic API key.");
+        }
         var sourceHint = detectedSource != null ? $"The listing was found on: {detectedSource}" : "";
         var prompt = "Extract job listing information from the following content.\n" +
                      "Return ONLY a valid JSON object with exactly these fields, no other text, no markdown:\n" +

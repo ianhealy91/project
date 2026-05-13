@@ -8,7 +8,7 @@ namespace Logbook.Services;
 public class AiExtractionService : IAiExtractionService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    private readonly string? _apiKey;
     private readonly ILogger<AiExtractionService> _logger;
 
     private const string ApiUrl = "https://api.anthropic.com/v1/messages";
